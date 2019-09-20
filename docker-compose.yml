@@ -1,0 +1,33 @@
+version: "3.3"
+services:
+  swarm-listener:
+    image: dockerflow/docker-flow-swarm-listener:18.11.28-19
+    environment:
+      DF_NOTIFY_CREATE_SERVICE_URL: http://notifier:8081/reconfigure
+      DF_NOTIFY_LABEL: com.docker.stack.namespace
+      DF_SERVICE_POLLING_INTERVAL: 20
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      mode: replicated
+      placement:
+        constraints:
+          - "node.role==manager"
+      restart_policy:
+        condition: any
+    networks:
+      - swarmguardian
+
+  notifier:
+    image: jarzamendia/swarmguardian:1.0.0
+    networks:
+      - swarmguardian
+    ports:
+      - "8081:8081"
+    environment:
+      - "STDOUT=true"
+      - "MAXREPLICAS=3"
+      #- "DEBUG=true"
+
+networks:
+  swarmguardian:
